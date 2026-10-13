@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "jira-markdown-exporter",
   "kind": "package",
-  "repository": "https://github.com/doruksahin/jira-markdown-exporter",
+  "repository": "https://github.com/llm-workflows/jira-markdown-exporter",
   "owner": "doruksahin",
   "document": "docs/architecture/README.md",
   "sourcePaths": [

@@ -121,7 +121,7 @@ recorded in
 [SPEC-01M1H1RXRVZFJ1GBPP39EKA2XR](../../decree/spec/exporter/spec-01m1h1rxrvzfj1gbpp39eka2xr-consumer-neutral-jira-export-and-adc-publication.md).
 
 The standalone
-[Jira-to-packet producer](https://github.com/doruksahin/jira-to-packet/blob/main/docs/architecture/README.md)
+[Jira-to-packet producer](https://github.com/llm-workflows/jira-to-packet/blob/main/docs/architecture/README.md)
 owns packet orchestration and templates extracted from AC-walkthrough. It
 consumes this exporter's public interfaces; the independently deferred Jira
 read-facade work below remains separate.

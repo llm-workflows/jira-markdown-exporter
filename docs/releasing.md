@@ -66,7 +66,7 @@ coordinates:
 | Field | Value |
 | --- | --- |
 | Provider | GitHub Actions |
-| GitHub owner | `doruksahin` |
+| GitHub owner | `llm-workflows` |
 | Repository | `jira-markdown-exporter` |
 | Workflow filename | `release-please.yml` |
 | Environment | Leave empty unless the publish job declares one; if it does, match it exactly. |
@@ -91,11 +91,11 @@ touch "$npm_auth_root/npmrc"
 chmod 600 "$npm_auth_root/npmrc"
 
 gh release download "v$release_version" \
-  --repo doruksahin/jira-markdown-exporter \
+  --repo llm-workflows/jira-markdown-exporter \
   --dir "$verification_root"
 
 gh release view "v$release_version" \
-  --repo doruksahin/jira-markdown-exporter \
+  --repo llm-workflows/jira-markdown-exporter \
   --json tagName,targetCommitish,publishedAt,url,assets
 
 cd "$verification_root"
@@ -130,7 +130,7 @@ workflow for the existing tag:
 
 ```sh
 gh workflow run release-please.yml \
-  --repo doruksahin/jira-markdown-exporter \
+  --repo llm-workflows/jira-markdown-exporter \
   --field publish_tag="v$release_version"
 ```
 
@@ -157,11 +157,11 @@ verification_root="$(mktemp -d)"
 npm_copy_root="$(mktemp -d)"
 
 gh release view "v$release_version" \
-  --repo doruksahin/jira-markdown-exporter \
+  --repo llm-workflows/jira-markdown-exporter \
   --json tagName,targetCommitish,publishedAt,url,assets
 
 gh release download "v$release_version" \
-  --repo doruksahin/jira-markdown-exporter \
+  --repo llm-workflows/jira-markdown-exporter \
   --dir "$verification_root"
 
 cd "$verification_root"
@@ -202,10 +202,10 @@ byte-identical to the GitHub tarball, and the installed CLI prints its complete
 help contract.
 
 The GitHub-only release rail was proven by
-[`v0.3.0`](https://github.com/doruksahin/jira-markdown-exporter/releases/tag/v0.3.0).
-The exact [`v0.4.0`](https://github.com/doruksahin/jira-markdown-exporter/releases/tag/v0.4.0)
+[`v0.3.0`](https://github.com/llm-workflows/jira-markdown-exporter/releases/tag/v0.3.0).
+The exact [`v0.4.0`](https://github.com/llm-workflows/jira-markdown-exporter/releases/tag/v0.4.0)
 tarball was the one-time interactive npm bootstrap. The subsequent
-[`v0.4.1`](https://github.com/doruksahin/jira-markdown-exporter/releases/tag/v0.4.1)
+[`v0.4.1`](https://github.com/llm-workflows/jira-markdown-exporter/releases/tag/v0.4.1)
 release proved Trusted Publishing end to end: GitHub OIDC published the new
 version without an npm token, npm recorded SLSA provenance, the GitHub and npm
 tarballs were byte-identical, and an isolated registry install printed the CLI

@@ -19,11 +19,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/doruksahin/jira-markdown-exporter.git"
+    "url": "git+https://github.com/llm-workflows/jira-markdown-exporter.git"
   },
-  "homepage": "https://github.com/doruksahin/jira-markdown-exporter#readme",
+  "homepage": "https://github.com/llm-workflows/jira-markdown-exporter#readme",
   "bugs": {
-    "url": "https://github.com/doruksahin/jira-markdown-exporter/issues"
+    "url": "https://github.com/llm-workflows/jira-markdown-exporter/issues"
   },
   "engines": {
     "node": ">=20"

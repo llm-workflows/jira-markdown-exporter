@@ -113,7 +113,7 @@ release_version=X.Y.Z
 artifact_dir="$(mktemp -d)"
 
 gh release download "v$release_version" \
-  --repo doruksahin/jira-markdown-exporter \
+  --repo llm-workflows/jira-markdown-exporter \
   --dir "$artifact_dir"
 
 cd "$artifact_dir"

@@ -76,7 +76,7 @@ A pinned source checkout is useful for development and for independently
 rebuilding a release:
 
 ```sh
-git clone https://github.com/doruksahin/jira-markdown-exporter.git
+git clone https://github.com/llm-workflows/jira-markdown-exporter.git
 cd jira-markdown-exporter
 exporter_ref="FULL_40_CHARACTER_COMMIT_SHA"
 printf '%s\n' "$exporter_ref" | grep -Eq '^[0-9a-f]{40}$' || {
@@ -455,7 +455,7 @@ release through a normal Conventional Commit PR followed by the generated
 `chore(main): release X.Y.Z` PR; neither version files nor tags are created
 manually.
 
-See [the release playbook](https://github.com/doruksahin/jira-markdown-exporter/blob/main/docs/releasing.md)
+See [the release playbook](https://github.com/llm-workflows/jira-markdown-exporter/blob/main/docs/releasing.md)
 for the exact merge, verification, artifact-download, checksum, installation,
 and recovery commands.
 

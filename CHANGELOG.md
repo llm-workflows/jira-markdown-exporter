@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/llm-workflows/jira-markdown-exporter/compare/v0.7.0...v0.7.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* update repository metadata for llm-workflows ([#22](https://github.com/llm-workflows/jira-markdown-exporter/issues/22)) ([29091b1](https://github.com/llm-workflows/jira-markdown-exporter/commit/29091b196bb4f9b4ed8705b27a2ec4960559dcb0))
+
 ## [0.7.0](https://github.com/doruksahin/jira-markdown-exporter/compare/v0.6.0...v0.7.0) (2026-09-20)
 
 

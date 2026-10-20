@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/llm-workflows/jira-markdown-exporter/compare/v0.7.1...v0.8.0) (2026-10-20)
+
+
+### Features
+
+* explicit estimate field choice and the board's estimation ([#24](https://github.com/llm-workflows/jira-markdown-exporter/issues/24)) ([8ef5c77](https://github.com/llm-workflows/jira-markdown-exporter/commit/8ef5c776ce53ce9fadb99cc686d96bfccb6fdf73))
+
 ## [0.7.1](https://github.com/llm-workflows/jira-markdown-exporter/compare/v0.7.0...v0.7.1) (2026-10-13)
 
 

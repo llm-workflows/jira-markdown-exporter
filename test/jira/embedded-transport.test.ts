@@ -83,6 +83,28 @@ describe('embedded transport boundary', () => {
     expect(requested).toHaveLength(2);
   });
 
+  it('searches the users Jira can assign in a project, as its own assignee picker does', async () => {
+    const urls: URL[] = [];
+    const users = [
+      { accountId: 'me', displayName: 'Doruk', active: true, accountType: 'atlassian' },
+      { accountId: 'former', displayName: 'Former', active: false },
+      { accountId: 'bot', displayName: 'Automation', accountType: 'app' },
+      { displayName: 'No identity' },
+    ];
+    const api = createJiraReadApi(embeddedConfig, { jiraGet: async (request) => { urls.push(new URL(request.url)); return response(users); } });
+    const result = await api.searchAssignableUsers({ projectKey: 'SCRUM', query: '  Dor ' });
+    expect(urls[0]?.pathname).toBe('/rest/api/3/user/assignable/search');
+    expect(Object.fromEntries(urls[0]!.searchParams)).toEqual({ project: 'SCRUM', query: 'Dor', maxResults: '50' });
+    expect(result).toEqual({ users: [{ accountId: 'me', displayName: 'Doruk', emailAddress: '', active: true }], truncated: false });
+    expect(Object.isFrozen(result.users)).toBe(true);
+    await expect(api.searchAssignableUsers({ projectKey: 'SCRUM', query: '', maxResults: 4 })).resolves.toMatchObject({ truncated: true });
+    await expect(api.searchAssignableUsers({ projectKey: 'SCRUM', query: 'x', maxResults: 101 })).rejects.toThrow(/1-100/);
+    await expect(api.searchAssignableUsers({ projectKey: 'SCRUM', query: 'a\u0000' })).rejects.toThrow(/Invalid assignee search query/);
+    expect(urls).toHaveLength(2);
+    const invalid = createJiraReadApi(embeddedConfig, { jiraGet: async () => response({ users }) });
+    await expect(invalid.searchAssignableUsers({ projectKey: 'SCRUM', query: '' })).rejects.toMatchObject({ code: 'JIRA_TRANSPORT_INVALID_RESPONSE' });
+  });
+
   it('owns endpoint generation, pagination, JQL, and issue normalization', async () => {
     const urls: URL[] = [];
     const transport: JiraGetTransport = async (request) => {

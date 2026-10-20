@@ -69,6 +69,20 @@ describe('embedded transport boundary', () => {
     });
   });
 
+  it('reads no estimate field only when the caller says the board has none, and never guesses one', async () => {
+    const issue = rawIssue('PROJ-1', 'One'), requested: string[] = [];
+    const api = createJiraReadApi(embeddedConfig, { jiraGet: async (request) => { requested.push(new URL(request.url).searchParams.get('fields') ?? ''); return response(issue); } });
+    const none = await api.getIssue({ issueKey: 'PROJ-1', storyPointsField: null });
+    expect(none.storyPoints).toBeNull();
+    expect(requested[0]?.split(',')).not.toContain('customfield_2');
+    const field = await api.getIssue({ issueKey: 'PROJ-1', storyPointsField: 'customfield_2' });
+    expect(field.storyPoints).not.toBeNull();
+    // A missing choice is a caller error, not "no estimate".
+    await expect(api.getIssue({ issueKey: 'PROJ-1' } as never)).rejects.toThrow(/Choose the story points field/);
+    await expect(api.getIssue({ issueKey: 'PROJ-1', storyPointsField: '' })).rejects.toThrow(/Invalid Jira field ID/);
+    expect(requested).toHaveLength(2);
+  });
+
   it('owns endpoint generation, pagination, JQL, and issue normalization', async () => {
     const urls: URL[] = [];
     const transport: JiraGetTransport = async (request) => {

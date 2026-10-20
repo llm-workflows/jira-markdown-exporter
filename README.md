@@ -236,7 +236,7 @@ import { createJiraReadApi } from '@doruksahin/jira-markdown-exporter/embedded';
 
 const jira = createJiraReadApi({ host: jiraHost }, { jiraGet });
 const layout = await jira.readBoardLayout(boardId);
-// layout: { id, name, columns: [{ name, statusIds }] }
+// layout: { id, name, columns: [{ name, statusIds }], estimation }
 ```
 
 `readBoardLayout` reads the board configuration and returns deeply frozen
@@ -247,6 +247,16 @@ Malformed data or repeated status IDs (within or across columns) reject with
 `JIRA_TRANSPORT_INVALID_RESPONSE`, operation `jira-board-layout`. Transport
 failures retain bounded error codes and HTTP status, including permission
 failures; response bodies are excluded.
+
+`estimation` is how the board estimates work, from the same configuration:
+`{ kind: 'field', fieldId, name }` when one issue field holds the estimate (story
+points), or `{ kind: 'none' }` when the board estimates by issue count or not at
+all. A `field` estimation without a safe field ID rejects as malformed.
+
+Issue reads take `storyPointsField` as an explicit choice: a field ID, or `null`
+for a board without an estimate field. There is no default; leaving it out is a
+caller error. With `null` the field is not requested and `storyPoints` is
+`null`, distinct from `''` (the field was read and the issue has no value).
 
 All `JiraIssueRecord` reads retain `fields.status.id` as `statusId` alongside
 the existing status name and category. A missing ID becomes an empty string.

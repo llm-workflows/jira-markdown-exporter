@@ -34,6 +34,7 @@ describe.each([
         { name: 'Quality', statusIds: ['10003', '10002'] },
         { name: 'Shipped', statusIds: [] },
       ],
+      estimation: { kind: 'none' },
     });
     expect(Object.isFrozen(layout)).toBe(true);
     expect(Object.isFrozen(layout.columns)).toBe(true);
@@ -64,6 +65,8 @@ describe.each([
       { name: 'Waiting', statuses: [{ id: '1' }] },
       { name: 'Quality', statuses: [{ id: '1' }] },
     ] } },
+    { ...rawLayout, estimation: { type: 'field', field: {} } },
+    { ...rawLayout, estimation: { type: 'field', field: { fieldId: 'token=secret' } } },
   ])('rejects malformed or ambiguous layout without exposing response data %#', async (body) => {
     const api = createApi(config, { jiraGet: async () => ({ status: 200, body }) });
     const error = await api.readBoardLayout(7).catch((value: unknown) => value);
@@ -73,6 +76,18 @@ describe.each([
       code: 'JIRA_TRANSPORT_INVALID_RESPONSE', operation: 'jira-board-layout',
     });
     expect(JSON.stringify(error)).not.toContain('secret');
+  });
+
+  it.each([
+    [{ type: 'field', field: { fieldId: 'customfield_10016', displayName: 'Story point estimate' } }, { kind: 'field', fieldId: 'customfield_10016', name: 'Story point estimate' }],
+    [{ type: 'field', field: { fieldId: 'timeoriginalestimate' } }, { kind: 'field', fieldId: 'timeoriginalestimate', name: 'timeoriginalestimate' }],
+    [{ type: 'issueCount' }, { kind: 'none' }],
+    [undefined, { kind: 'none' }],
+  ])('reads the board estimation from its configuration %#', async (estimation, expected) => {
+    const api = createApi(config, { jiraGet: async () => ({ status: 200, body: { ...rawLayout, estimation } }) });
+    const layout = await api.readBoardLayout(7);
+    expect(layout.estimation).toEqual(expected);
+    expect(Object.isFrozen(layout.estimation)).toBe(true);
   });
 
   it.each([403, 404, 429, 500])('preserves bounded HTTP status %i without response data', async (status) => {

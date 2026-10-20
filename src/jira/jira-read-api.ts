@@ -31,6 +31,14 @@ export interface JiraBoardRecord {
   readonly type: string;
 }
 
+/**
+ * How a board estimates work, from its Jira configuration. `field`: one issue field holds the estimate (story points).
+ * `none`: the board estimates by issue count or not at all, so issues have no estimate field to read.
+ */
+export type JiraBoardEstimation =
+  | Readonly<{ kind: 'field'; fieldId: string; name: string }>
+  | Readonly<{ kind: 'none' }>;
+
 export interface JiraBoardLayout {
   readonly id: string;
   readonly name: string;
@@ -38,6 +46,7 @@ export interface JiraBoardLayout {
     name: string;
     statusIds: readonly string[];
   }>[];
+  readonly estimation: JiraBoardEstimation;
 }
 
 export interface JiraFieldRecord {
@@ -66,7 +75,8 @@ export interface JiraIssueRecord {
   readonly statusCategory: string;
   readonly priority: string;
   readonly issueType: string;
-  readonly storyPoints: string;
+  /** The estimate field's value ('' when the issue has none); null when the read requested no estimate field. */
+  readonly storyPoints: string | null;
   readonly updated: string;
   readonly assignee: JiraUserRecord | null;
   readonly assigneeEvidenceComplete: boolean;
@@ -96,11 +106,13 @@ export interface JiraReadApi {
   listFields(): Promise<readonly JiraFieldRecord[]>;
   getIssue(input: Readonly<{
     issueKey: string;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueRecord>;
   getTaskRecordEvidence(input: Readonly<{
     issueKey: string;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
     sprintField: string;
   }>): Promise<JiraIssueEvidence>;
   listBoardSprints(input: Readonly<{
@@ -111,7 +123,8 @@ export interface JiraReadApi {
     sprintId: string | number;
     projectKey: string;
     assigneeAccountId: string;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueList>;
   listBoardIssues(input: Readonly<{
     boardId: string | number;
@@ -119,14 +132,16 @@ export interface JiraReadApi {
     assigneeAccountId: string;
     unresolvedOnly: true;
     orderByUpdatedDesc: true;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueList>;
   listAssignedIssues(input: Readonly<{
     projectKey: string;
     assigneeAccountId: string;
     unresolvedOnly: true;
     orderByUpdatedDesc: true;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueList>;
 }
 
@@ -193,7 +208,8 @@ class JiraTransportReadApi implements JiraReadApi {
 
   async getIssue(input: Readonly<{
     issueKey: string;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueRecord> {
     const key = jiraIssueKey(input.issueKey);
     const fields = issueFields(input.storyPointsField);
@@ -205,7 +221,8 @@ class JiraTransportReadApi implements JiraReadApi {
 
   async getTaskRecordEvidence(input: Readonly<{
     issueKey: string;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
     sprintField: string;
   }>): Promise<JiraIssueEvidence> {
     const key = jiraIssueKey(input.issueKey);
@@ -254,7 +271,8 @@ class JiraTransportReadApi implements JiraReadApi {
     sprintId: string | number;
     projectKey: string;
     assigneeAccountId: string;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueList> {
     const sprintId = jiraNumericId(input.sprintId, 'sprint');
     const fields = issueFields(input.storyPointsField);
@@ -283,7 +301,8 @@ class JiraTransportReadApi implements JiraReadApi {
     assigneeAccountId: string;
     unresolvedOnly: true;
     orderByUpdatedDesc: true;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueList> {
     if (input.unresolvedOnly !== true || input.orderByUpdatedDesc !== true) {
       throw new Error('Board issue policy must explicitly select unresolved issues ordered by updated descending');
@@ -306,7 +325,8 @@ class JiraTransportReadApi implements JiraReadApi {
     assigneeAccountId: string;
     unresolvedOnly: true;
     orderByUpdatedDesc: true;
-    storyPointsField: string;
+    /** The estimate field to read, or null for a board without one. Required: there is no default. */
+    storyPointsField: string | null;
   }>): Promise<JiraIssueList> {
     if (input.unresolvedOnly !== true || input.orderByUpdatedDesc !== true) {
       throw new Error('Assigned issue policy must explicitly select unresolved issues ordered by updated descending');
@@ -319,7 +339,7 @@ class JiraTransportReadApi implements JiraReadApi {
   private async issuePages(
     operation: 'jira-board-issues' | 'jira-sprint-issues',
     fields: readonly string[],
-    storyPointsField: string,
+    storyPointsField: string | null,
     read: (startAt: number) => Promise<AgileModels.SearchResults>,
   ): Promise<JiraIssueList> {
     const issues: JiraIssueRecord[] = [];
@@ -345,7 +365,7 @@ class JiraTransportReadApi implements JiraReadApi {
   private async enhancedSearchIssuePages(
     operation: 'jira-sprint-issues' | 'jira-assigned-issues',
     fields: readonly string[],
-    storyPointsField: string,
+    storyPointsField: string | null,
     jql: string,
     include: (issue: Version3Models.Issue) => boolean = () => true,
   ): Promise<JiraIssueList> {
@@ -405,7 +425,16 @@ function normalizeBoardLayout(value: unknown, expectedId: string): JiraBoardLayo
     });
     return Object.freeze({ name: column.name, statusIds: Object.freeze(statusIds) });
   });
-  return Object.freeze({ id: expectedId, name: layout.name, columns: Object.freeze(normalizedColumns) });
+  return Object.freeze({ id: expectedId, name: layout.name, columns: Object.freeze(normalizedColumns), estimation: normalizeEstimation(layout.estimation, invalid) });
+}
+
+function normalizeEstimation(value: unknown, invalid: () => Error): JiraBoardEstimation {
+  if (value === undefined || value === null) return Object.freeze({ kind: 'none' });
+  const estimation = record(value);
+  if (estimation.type !== 'field') return Object.freeze({ kind: 'none' });
+  const field = record(estimation.field), fieldId = field.fieldId;
+  if (typeof fieldId !== 'string' || !/^[A-Za-z][A-Za-z0-9_.-]*$/.test(fieldId)) throw invalid();
+  return Object.freeze({ kind: 'field', fieldId, name: typeof field.displayName === 'string' && field.displayName.trim() ? field.displayName : fieldId });
 }
 
 function normalizeSprint(sprint: AgileModels.Sprint): JiraSprintRecord {
@@ -433,7 +462,7 @@ function normalizeSprintField(value: unknown): readonly JiraSprintRecord[] {
 
 function normalizeIssue(
   issue: Version3Models.Issue,
-  storyPointsField: string,
+  storyPointsField: string | null,
   jiraOrigin: string,
 ): JiraIssueRecord {
   const fields = (issue.fields || {}) as Record<string, unknown>;
@@ -454,7 +483,7 @@ function normalizeIssue(
     statusCategory: String(statusCategory.key || ''),
     priority: String(priority.name || ''),
     issueType: String(issueType.name || ''),
-    storyPoints: String(fields[storyPointsField] ?? ''),
+    storyPoints: storyPointsField === null ? null : String(fields[storyPointsField] ?? ''),
     updated: String(fields.updated || ''),
     assignee: assignee && Object.keys(assignee).length ? normalizeUser(assignee as Partial<Version3Models.User>) : null,
     assigneeEvidenceComplete: Object.prototype.hasOwnProperty.call(fields, 'assignee'),
@@ -481,8 +510,10 @@ function jqlValue(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
-function issueFields(storyPointsField: string, extra: readonly string[] = []): string[] {
-  return jiraFields([...STANDARD_ISSUE_FIELDS, jiraField(storyPointsField), ...extra]);
+function issueFields(storyPointsField: string | null, extra: readonly string[] = []): string[] {
+  // An explicit choice: a field id, or null for a board without an estimate field. A missing choice is a caller error.
+  if ((storyPointsField as unknown) === undefined) throw new Error('Choose the story points field, or null for a board without one');
+  return jiraFields([...STANDARD_ISSUE_FIELDS, ...(storyPointsField === null ? [] : [jiraField(storyPointsField)]), ...extra]);
 }
 
 function jiraField(value: string): string {

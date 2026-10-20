@@ -19,6 +19,11 @@ export interface JiraUserRecord {
   readonly active: boolean | null;
 }
 
+export interface JiraAssignableUsers {
+  readonly users: readonly JiraUserRecord[];
+  readonly truncated: boolean;
+}
+
 export interface JiraProjectRecord {
   readonly id: string;
   readonly key: string;
@@ -103,6 +108,12 @@ export interface JiraReadApi {
   probeBoard(boardId: string | number): Promise<JiraBoardRecord>;
   readBoardLayout(boardId: string | number): Promise<JiraBoardLayout>;
   findAssignableUser(input: Readonly<{ projectKey: string; accountId: string }>): Promise<JiraUserRecord | null>;
+  /**
+   * Jira's own assignee picker for a project: active users who can be assigned its issues, matched by `query`
+   * (Jira matches display name and email prefixes; '' lists from the start). One page of up to `maxResults` (1–100,
+   * default 50); `truncated` says more may match, so callers ask for a narrower query instead of paging everyone.
+   */
+  searchAssignableUsers(input: Readonly<{ projectKey: string; query: string; maxResults?: number }>): Promise<JiraAssignableUsers>;
   listFields(): Promise<readonly JiraFieldRecord[]>;
   getIssue(input: Readonly<{
     issueKey: string;
@@ -195,6 +206,23 @@ class JiraTransportReadApi implements JiraReadApi {
     }) as Version3Models.User[];
     const exact = users.find((user) => String(user.accountId || '') === accountId);
     return exact ? normalizeUser(exact) : null;
+  }
+
+  async searchAssignableUsers(input: Readonly<{ projectKey: string; query: string; maxResults?: number }>): Promise<JiraAssignableUsers> {
+    const project = jiraProjectKey(input.projectKey);
+    const query = typeof input.query === 'string' ? input.query.trim() : '';
+    if (query.length > 100 || /[\u0000-\u001f\u007f]/.test(query)) throw new Error('Invalid assignee search query');
+    const maxResults = input.maxResults ?? 50;
+    if (!Number.isInteger(maxResults) || maxResults < 1 || maxResults > PAGE_SIZE) throw new Error('Assignee search size must be 1-100');
+    const users = await jiraGetJson(this.config, this.transport, 'jira-assignee', '/rest/api/3/user/assignable/search', {
+      project,
+      query,
+      maxResults,
+    });
+    if (!Array.isArray(users)) throw new ExporterTransportError('JIRA_TRANSPORT_INVALID_RESPONSE', 'jira-assignee');
+    const people = (users as Version3Models.User[]).filter((user) => user && typeof user === 'object'
+      && typeof user.accountId === 'string' && user.accountId && user.active !== false && user.accountType !== 'app');
+    return Object.freeze({ users: Object.freeze(people.map(normalizeUser)), truncated: users.length >= maxResults });
   }
 
   async listFields(): Promise<readonly JiraFieldRecord[]> {

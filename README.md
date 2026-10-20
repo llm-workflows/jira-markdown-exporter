@@ -253,6 +253,13 @@ failures; response bodies are excluded.
 points), or `{ kind: 'none' }` when the board estimates by issue count or not at
 all. A `field` estimation without a safe field ID rejects as malformed.
 
+`searchAssignableUsers({ projectKey, query, maxResults? })` is Jira's own
+assignee picker for a project: active people who can be assigned its issues,
+matched by Jira on display name or email prefix. It returns one page of up to
+`maxResults` (1–100, default 50) as `{ users, truncated }`; `truncated` asks the
+caller for a narrower query rather than listing everyone. Apps and deactivated
+users are excluded.
+
 Issue reads take `storyPointsField` as an explicit choice: a field ID, or `null`
 for a board without an estimate field. There is no default; leaving it out is a
 caller error. With `null` the field is not requested and `storyPoints` is
